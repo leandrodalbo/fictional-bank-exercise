@@ -1,0 +1,36 @@
++------------------+
+|      USERS       |
++------------------+
+| id (PK)          |
+| name             |
+| email            |
+| created_at       |
++------------------+
+         |
+         | 1
+         |
+         | N
++------------------+
+|    ACCOUNTS      |
++------------------+
+| id (PK)          |
+| user_id (FK)     |
+| account_number   |
+| balance          |
+| currency         |
+| created_at       |
++------------------+
+         |
+         | 1
+         |
+         | N
++----------------------+
+|    TRANSACTIONS      |
++----------------------+
+| id (PK)              |
+| account_id (FK)      |
+| type (CREDIT/DEBIT)  |
+| amount               |
+| description         |
+| created_at          |
++----------------------+
