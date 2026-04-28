@@ -1,7 +1,5 @@
 package com.fictional.bank.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -12,14 +10,15 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 @Testcontainers
 @DataJpaTest
 @AutoConfigureTestDatabase(
         replace = AutoConfigureTestDatabase.Replace.NONE
 )
-class UserRepositoryTests
+class AccountRepositoryTests
 {
-
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> container =
@@ -27,17 +26,12 @@ class UserRepositoryTests
 
 
     @Autowired
-    protected UserRepository userRepository;
+    protected AccountRepository accountRepository;
 
     @Test
-    void shouldFindUserByMail()
+    void shouldFindUserByUserId()
     {
-        assertThat(userRepository.existsByEmail("john.smith@test.com")).isTrue();
+        assertThat(accountRepository.findByUserId(1L)).isNotEmpty();
     }
 
-    @Test
-    void shouldCheckTheUserHasAccounts()
-    {
-        assertThat(userRepository.hasAccounts(1L)).isTrue();
-    }
 }

@@ -3,39 +3,74 @@ package com.fictional.bank;
 import java.util.List;
 import java.util.Optional;
 
-import com.fictional.bank.model.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fictional.bank.repository.UserRepository;
-import com.fictional.bank.request.UpdateUserRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
 import com.fictional.bank.request.CreateUserRequest;
 import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.request.UpdateUserRequest;
+import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class UserTests extends TestContainersSetup
+@SpringBootTest
+@AutoConfigureTestDatabase(
+        replace = AutoConfigureTestDatabase.Replace.NONE
+)
+@Testcontainers
+class UserTests
 {
-
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> container =
+            new PostgreSQLContainer<>(DockerImageName.parse("postgres:alpine"));
     private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
     @Autowired
-    private MockMvc mockMvc;
+    protected MockMvc mockMvc;
+
     @Autowired
-    private UserRepository repository;
+    protected ObjectMapper objectMapper;
+
     @Autowired
-    private ObjectMapper objectMapper;
+    protected UserRepository userRepository;
+
+    /**
+     * Scenario: User wants to delete their user details (no bank account)
+     * Given a user has successfully authenticated
+     * When the user makes a DELETE request to the /v1/users/{userId} endpoint
+     * And they do not have a bank account
+     * Then the system deletes their user
+     */
+    @Test
+    void shouldDeleteOwnUserWithoutAccount() throws Exception
+    {
+        User user = getTestingUsers().stream().filter(it -> it.getEmail().contains("deleteme")).toList().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(delete("/v1/users/" + user.getId())
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+    }
 
     /**
      * Scenario: User wants to fetch their user details
@@ -112,7 +147,7 @@ class UserTests extends TestContainersSetup
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserRequest)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value(updateUserRequest.getEmail().get()));
     }
 
@@ -177,7 +212,7 @@ class UserTests extends TestContainersSetup
         mockMvc.perform(post("/v1/users")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.email").value("integration@test.com"));
     }
@@ -209,6 +244,68 @@ class UserTests extends TestContainersSetup
     }
 
 
+    /**
+     * Scenario: User wants to delete their user details and they have a bank account
+     * Given a user has successfully authenticated
+     * When the user makes a DELETE request to the /v1/users/{userId} endpoint
+     * And they have a bank account
+     * Then the system returns a Conflict status code and error message
+     */
+    @Test
+    void shouldReturnConflictWhenDeletingUserWithAccount() throws Exception
+    {
+        List<User> users = getTestingUsers();
+        User user = users.get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(delete("/v1/users/" + user.getId())
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    /**
+     * Scenario: User wants to delete user details of another user
+     * Given a user has successfully authenticated
+     * When the user makes a DELETE request to the /v1/users/{userId} endpoint
+     * And the userId is associated with another user
+     * Then the system returns a Forbidden status code and error message
+     */
+    @Test
+    void shouldReturnForbiddenWhenDeletingAnotherUser() throws Exception
+    {
+        List<User> users = getTestingUsers();
+        LoginRequest loginRequest = loginRequest(users.get(0));
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(delete("/v1/users/" + users.get(1).getId())
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    /**
+     * Scenario: User wants to delete user details of a non-existent user
+     * Given a user has successfully authenticated
+     * When the user makes a DELETE request to the /v1/users/{userId} endpoint
+     * And the userId doesn't exist
+     * Then the system returns a Not Found status code and error message
+     */
+    @Test
+    void shouldReturnNotFoundWhenDeletingNonExistentUser() throws Exception
+    {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(delete("/v1/users/99999")
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+
     private String getLoginToken(LoginRequest request) throws Exception
     {
         String json = mockMvc.perform(post("/v1/users/login")
@@ -229,6 +326,6 @@ class UserTests extends TestContainersSetup
 
     private List<User> getTestingUsers()
     {
-        return repository.findAll();
+        return userRepository.findAll();
     }
 }

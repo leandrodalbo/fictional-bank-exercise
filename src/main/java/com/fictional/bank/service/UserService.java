@@ -2,6 +2,7 @@ package com.fictional.bank.service;
 
 import java.util.Date;
 
+import com.fictional.bank.exception.ApiNotDeletableException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -107,7 +108,7 @@ public class UserService
     {
 
         User saved = userRepository.findById(userId)
-            .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
+                .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
 
         validateUser(saved.getEmail(), userMail);
 
@@ -119,19 +120,35 @@ public class UserService
         User updated = userRepository.save(saved);
 
         return new UserResponse(
-            updated.getId().toString(),
-            updated.getName(),
-            updated.getAddress(),
-            updated.getPhoneNumber(),
-            updated.getEmail(),
-            updated.getCreatedAt() != null ? updated.getCreatedAt().toString() : "",
-            updated.getUpdatedAt() != null ? updated.getUpdatedAt().toString() : ""
+                updated.getId().toString(),
+                updated.getName(),
+                updated.getAddress(),
+                updated.getPhoneNumber(),
+                updated.getEmail(),
+                updated.getCreatedAt() != null ? updated.getCreatedAt().toString() : "",
+                updated.getUpdatedAt() != null ? updated.getUpdatedAt().toString() : ""
         );
     }
 
 
-    private void validateUser(String userEmail, String currentUserEmail){
-        if(!userEmail.equals(currentUserEmail)) throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
+    @Transactional
+    public void deleteUserDetails(long userId, String userMail)
+    {
+
+        User saved = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
+
+        validateUser(saved.getEmail(), userMail);
+
+        if (userRepository.hasAccounts(userId)) throw new ApiNotDeletableException(ApiErrorMessage.INVALID_REQUEST);
+
+        userRepository.deleteById(userId);
+    }
+
+    private void validateUser(String userEmail, String currentUserEmail)
+    {
+        if (!userEmail.equals(currentUserEmail))
+            throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
     }
 
 

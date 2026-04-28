@@ -61,6 +61,16 @@ public class ApiExceptionHandler
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ApiNotDeletableException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleNotFoundException(ApiNotDeletableException ex)
+    {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public ResponseEntity<Object> handleGenericException(Exception ex)

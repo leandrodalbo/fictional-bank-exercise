@@ -7,6 +7,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import com.fictional.bank.exception.ApiErrorMessage;
+import com.fictional.bank.exception.ApiNotDeletableException;
 import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
@@ -22,6 +23,7 @@ import org.mockito.Mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -177,6 +179,22 @@ public class UserServiceTest
     }
 
     @Test
+    void shouldUpdateUserName()
+    {
+
+        updatedUser.setName("new name");
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+        when(userRepository.save(any())).thenReturn(updatedUser);
+
+        UserResponse result = userService.updateUserDetails(testingUser.getId(), testingUser.getEmail(), updateUserRequest);
+
+        assertThat(result.getName()).isEqualTo("new name");
+
+        verify(userRepository).findById(anyLong());
+        verify(userRepository).save(any());
+    }
+
+    @Test
     void shouldNotUpdateAUserWhenNotFound()
     {
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
@@ -201,4 +219,61 @@ public class UserServiceTest
 
         verify(userRepository).findById(anyLong());
     }
+
+    @Test
+    void shouldDeleteUserDetails()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+        when(userRepository.hasAccounts(anyLong())).thenReturn(false);
+        doNothing().when(userRepository).deleteById(anyLong());
+
+        userService.deleteUserDetails(testingUser.getId(), testingUser.getEmail());
+
+
+        verify(userRepository).findById(anyLong());
+        verify(userRepository).hasAccounts(anyLong());
+        verify(userRepository).deleteById(anyLong());
+    }
+
+    @Test
+    void shouldNotDeleteAUserWhenNotFound()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> userService.deleteUserDetails(1111L, testingUser.getEmail()))
+                .withMessageContaining(ApiErrorMessage.USER_NOT_FOUND.getMessage());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+
+    @Test
+    void shouldNotDeleteAnotherUser()
+    {
+        String email = "userMail@mail.com";
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> userService.deleteUserDetails(testingUser.getId(), email))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+    @Test
+    void shouldDeleteUserWithExistingAccounts()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+        when(userRepository.hasAccounts(anyLong())).thenReturn(true);
+
+        assertThatExceptionOfType(ApiNotDeletableException.class)
+                .isThrownBy(() -> userService.deleteUserDetails(1111L, testingUser.getEmail()))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(userRepository).findById(anyLong());
+        verify(userRepository).hasAccounts(anyLong());
+
+    }
+
 }
