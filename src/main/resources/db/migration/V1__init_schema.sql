@@ -2,7 +2,15 @@ CREATE TABLE users (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    phone_number VARCHAR(20) NOT NULL,
+    address_line1 VARCHAR(255),
+    address_line2 VARCHAR(255),
+    address_line3 VARCHAR(255),
+    address_town VARCHAR(100),
+    address_county VARCHAR(100),
+    address_postcode VARCHAR(20),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
 );
 
 CREATE TABLE accounts (
