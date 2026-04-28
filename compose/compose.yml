@@ -11,4 +11,3 @@ services:
       POSTGRES_DB: fictionalbank
     ports:
       - "5432:5432"
-    

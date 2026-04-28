@@ -8,12 +8,15 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
+import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.response.LoginResponse;
 import com.fictional.bank.response.UserResponse;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,9 +33,16 @@ public class UserServiceTest
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
+    private final String secret = "uQw8vQ1pQ2t6bXJ5dGZzZ2hqa2xtbm9wcXJzdHV2d3h5eg==";
+    private final Long expiration = 86400000L;
+
     private UserService userService;
 
+    @BeforeEach
+    void setUp()
+    {
+        userService = new UserService(userRepository, secret, expiration);
+    }
 
     @Test
     void shouldNotCreateAUserIfTheEmailAlreadyExists()
@@ -73,5 +83,17 @@ public class UserServiceTest
         assertThat(res.getId()).isNotNull();
         assertThat(res.getAddress()).isNotNull();
         verify(userRepository).existsByEmail(email);
+    }
+
+
+    @Test
+    void shouldLoginUser()
+    {
+        when(userRepository.existsByEmail(anyString())).thenReturn(true);
+
+        LoginResponse response = userService.login(new LoginRequest("usermail@mail.com"));
+
+        assertThat(response.token()).isNotEmpty();
+        verify(userRepository).existsByEmail(anyString());
     }
 }
