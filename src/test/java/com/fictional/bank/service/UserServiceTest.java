@@ -11,6 +11,7 @@ import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
 import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.request.UpdateUserRequest;
 import com.fictional.bank.response.LoginResponse;
 import com.fictional.bank.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -45,6 +47,18 @@ public class UserServiceTest
             LocalDateTime.now(),
             LocalDateTime.now()
     );
+
+    private final User updatedUser = new User(
+            1001L,
+            "user-name",
+            new UserAddress("l1", "l2", "l3", "town", "", ""),
+            "updated@mail.com",
+            "+5445350001",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
+
+    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
 
     @Mock
     private UserRepository userRepository;
@@ -81,7 +95,7 @@ public class UserServiceTest
         CreateUserRequest request = new CreateUserRequest(name, address, phone, email);
 
         when(userRepository.existsByEmail(email)).thenReturn(false);
-        when(userRepository.save(org.mockito.ArgumentMatchers.any())).thenAnswer(invocation -> {
+        when(userRepository.save(any())).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             user.setId(1L);
             user.setAddress(address);
@@ -142,6 +156,47 @@ public class UserServiceTest
 
         assertThatExceptionOfType(AccessDeniedException.class)
                 .isThrownBy(() -> userService.userDetails(testingUser.getId(), email))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+    @Test
+    void shouldUpdateUserDetails()
+    {
+
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+        when(userRepository.save(any())).thenReturn(updatedUser);
+
+        UserResponse result = userService.updateUserDetails(testingUser.getId(), testingUser.getEmail(), updateUserRequest);
+
+        assertThat(result.getEmail()).isEqualTo(updatedUser.getEmail());
+
+        verify(userRepository).findById(anyLong());
+        verify(userRepository).save(any());
+    }
+
+    @Test
+    void shouldNotUpdateAUserWhenNotFound()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> userService.updateUserDetails(testingUser.getId(), testingUser.getEmail(), updateUserRequest))
+                .withMessageContaining(ApiErrorMessage.USER_NOT_FOUND.getMessage());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+
+    @Test
+    void shouldNotUpdateTheDetailsOfAnotherUser()
+    {
+        String email = "userMail@mail.com";
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> userService.updateUserDetails(testingUser.getId(), email, updateUserRequest))
                 .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
 
         verify(userRepository).findById(anyLong());

@@ -1,23 +1,21 @@
 package com.fictional.bank.service;
 
 import java.util.Date;
-import java.util.UUID;
 
-import com.fictional.bank.exception.ApiNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiException;
 import com.fictional.bank.exception.ApiLoginException;
+import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.model.User;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateUserRequest;
 import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.request.UpdateUserRequest;
 import com.fictional.bank.response.LoginResponse;
 import com.fictional.bank.response.UserResponse;
 
@@ -43,6 +41,7 @@ public class UserService
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public UserResponse createNewUser(CreateUserRequest request)
     {
         if (userRepository.existsByEmail(request.getEmail()))
@@ -90,7 +89,7 @@ public class UserService
 
         User saved = userRepository.findById(userId).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
 
-        if(!saved.getEmail().equals(userMail)) throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
+        validateUser(saved.getEmail(), userMail);
 
         return new UserResponse(
                 saved.getId().toString(),
@@ -101,6 +100,38 @@ public class UserService
                 saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : "",
                 saved.getUpdatedAt() != null ? saved.getUpdatedAt().toString() : ""
         );
+    }
+
+    @Transactional
+    public UserResponse updateUserDetails(long userId, String userMail, UpdateUserRequest request)
+    {
+
+        User saved = userRepository.findById(userId)
+            .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
+
+        validateUser(saved.getEmail(), userMail);
+
+        request.getName().ifPresent(saved::setName);
+        request.getAddress().ifPresent(saved::setAddress);
+        request.getPhoneNumber().ifPresent(saved::setPhoneNumber);
+        request.getEmail().ifPresent(saved::setEmail);
+
+        User updated = userRepository.save(saved);
+
+        return new UserResponse(
+            updated.getId().toString(),
+            updated.getName(),
+            updated.getAddress(),
+            updated.getPhoneNumber(),
+            updated.getEmail(),
+            updated.getCreatedAt() != null ? updated.getCreatedAt().toString() : "",
+            updated.getUpdatedAt() != null ? updated.getUpdatedAt().toString() : ""
+        );
+    }
+
+
+    private void validateUser(String userEmail, String currentUserEmail){
+        if(!userEmail.equals(currentUserEmail)) throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
     }
 
 

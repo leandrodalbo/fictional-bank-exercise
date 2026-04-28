@@ -1,9 +1,11 @@
 package com.fictional.bank;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fictional.bank.model.User;
 import com.fictional.bank.repository.UserRepository;
+import com.fictional.bank.request.UpdateUserRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,10 +13,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fictional.bank.model.UserAddress;
@@ -25,12 +28,12 @@ import com.fictional.bank.request.LoginRequest;
 @AutoConfigureMockMvc
 class UserTests extends TestContainersSetup
 {
+
+    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private UserRepository repository;
-
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -87,6 +90,70 @@ class UserTests extends TestContainersSetup
 
         mockMvc.perform(get("/v1/users/99999")
                                 .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+
+    /**
+     * Scenario: User wants to update their user details
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/users/{userId} endpoint supplying their userId and all the required data
+     * Then the system updates the user details and returns the updated data
+     */
+    @Test
+    void shouldUpdateUserDetails() throws Exception
+    {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(patch("/v1/users/" + user.getId())
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateUserRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(updateUserRequest.getEmail().get()));
+    }
+
+    /**
+     * Scenario: User wants to update the user details of another user
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/users/{userId} endpoint supplying another user's userId
+     * Then the system returns a Forbidden status code and error message
+     */
+    @Test
+    void shouldReturnForbiddenWhenUpdatingAnotherUser() throws Exception
+    {
+        List<User> users = getTestingUsers();
+        LoginRequest loginRequest = loginRequest(users.get(0));
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/v1/users/" + users.get(1).getId())
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateUserRequest)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    /**
+     * Scenario: User wants to update the user details of a non-existent user
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/users/{userId} endpoint supplying a userId which doesn't exist
+     * Then the system returns a Not Found status code and error message
+     */
+    @Test
+    void shouldReturnNotFoundWhenUpdatingNonExistentUser() throws Exception
+    {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/v1/users/99999")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateUserRequest)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
