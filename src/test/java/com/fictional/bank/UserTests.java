@@ -1,5 +1,9 @@
 package com.fictional.bank;
 
+import java.util.List;
+
+import com.fictional.bank.model.User;
+import com.fictional.bank.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -10,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fictional.bank.model.UserAddress;
@@ -20,14 +25,71 @@ import com.fictional.bank.request.LoginRequest;
 @AutoConfigureMockMvc
 class UserTests extends TestContainersSetup
 {
-
-
-    private final LoginRequest loginRequest =
-            new LoginRequest("john.smith@test.com");
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository repository;
+
     @Autowired
     private ObjectMapper objectMapper;
+
+    /**
+     * Scenario: User wants to fetch their user details
+     * Given a user has successfully authenticated
+     * When the user makes a GET request to the /v1/users/{userId} endpoint supplying their userId
+     * Then the system fetches the user details
+     */
+    @Test
+    void shouldFetchOwnUserDetails() throws Exception
+    {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(get("/v1/users/" + user.getId())
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(user.getEmail()));
+    }
+
+    /**
+     * Scenario: User wants to fetch the user details of another user
+     * Given a user has successfully authenticated
+     * When the user makes a GET request to the /v1/users/{userId} endpoint supplying another user's userId
+     * Then the system returns a Forbidden status code and error message
+     */
+    @Test
+    void shouldReturnForbiddenWhenFetchingAnotherUser() throws Exception
+    {
+        List<User> users = getTestingUsers();
+        LoginRequest loginRequest = loginRequest(users.get(0));
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(get("/v1/users/" + users.get(1).getId())
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    /**
+     * Scenario: User wants to fetch the user details of a non-existent user
+     * Given a user has successfully authenticated
+     * When the user makes a GET request to the /v1/users/{userId} endpoint supplying a userId which doesn't exist
+     * Then the system returns a Not Found status code and error message
+     */
+    @Test
+    void shouldReturnNotFoundForNonExistentUser() throws Exception
+    {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
+
+        mockMvc.perform(get("/v1/users/99999")
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
 
     /**
      * Scenario: Create a new user
@@ -61,6 +123,9 @@ class UserTests extends TestContainersSetup
     @Test
     void shouldGetBadRequestWithoutRequiredData() throws Exception
     {
+        User user = getTestingUsers().get(0);
+        LoginRequest loginRequest = loginRequest(user);
+        String token = getLoginToken(loginRequest);
 
         CreateUserRequest request = new CreateUserRequest(
                 null,
@@ -70,23 +135,33 @@ class UserTests extends TestContainersSetup
         );
 
         mockMvc.perform(post("/v1/users")
-                                .header("Authorization", "Bearer " + getLoginToken())
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
 
-    private String getLoginToken() throws Exception
+    private String getLoginToken(LoginRequest request) throws Exception
     {
         String json = mockMvc.perform(post("/v1/users/login")
                                               .contentType(MediaType.APPLICATION_JSON)
-                                              .content(objectMapper.writeValueAsString(loginRequest)))
+                                              .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         return objectMapper.readTree(json).get("token").asText();
+    }
+
+    private LoginRequest loginRequest(User user)
+    {
+        return new LoginRequest(user.getEmail());
+    }
+
+    private List<User> getTestingUsers()
+    {
+        return repository.findAll();
     }
 }

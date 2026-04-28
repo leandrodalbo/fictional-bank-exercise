@@ -3,7 +3,12 @@ package com.fictional.bank.service;
 import java.util.Date;
 import java.util.UUID;
 
+import com.fictional.bank.exception.ApiNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.fictional.bank.exception.ApiErrorMessage;
@@ -22,13 +27,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class UserService
 {
-    private String secret;
-    private Long tokenExpirationTime;
     private final UserRepository userRepository;
+    private final String secret;
+    private final Long tokenExpirationTime;
 
 
     public UserService(UserRepository userRepository,
-                      @Value("${jwt.secret}")
+                       @Value("${jwt.secret}")
                        String secret,
                        @Value("${jwt.expiration}")
                        Long tokenExpirationTime)
@@ -79,4 +84,24 @@ public class UserService
 
         return new LoginResponse(token);
     }
+
+    public UserResponse userDetails(long userId, String userMail)
+    {
+
+        User saved = userRepository.findById(userId).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
+
+        if(!saved.getEmail().equals(userMail)) throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        return new UserResponse(
+                saved.getId().toString(),
+                saved.getName(),
+                saved.getAddress(),
+                saved.getPhoneNumber(),
+                saved.getEmail(),
+                saved.getCreatedAt() != null ? saved.getCreatedAt().toString() : "",
+                saved.getUpdatedAt() != null ? saved.getUpdatedAt().toString() : ""
+        );
+    }
+
+
 }

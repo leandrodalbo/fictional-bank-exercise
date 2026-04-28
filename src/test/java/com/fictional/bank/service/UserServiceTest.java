@@ -1,11 +1,13 @@
 package com.fictional.bank.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import com.fictional.bank.exception.ApiErrorMessage;
+import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
 import com.fictional.bank.request.LoginRequest;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,17 +28,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fictional.bank.exception.ApiException;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateUserRequest;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest
 {
 
-    @Mock
-    private UserRepository userRepository;
-
     private final String secret = "uQw8vQ1pQ2t6bXJ5dGZzZ2hqa2xtbm9wcXJzdHV2d3h5eg==";
     private final Long expiration = 86400000L;
+    private final User testingUser = new User(
+            1001L,
+            "user-name",
+            new UserAddress("l1", "l2", "l3", "town", "", ""),
+            "testinguser@mail.com",
+            "",
+            LocalDateTime.now(),
+            LocalDateTime.now()
+    );
 
+    @Mock
+    private UserRepository userRepository;
     private UserService userService;
 
     @BeforeEach
@@ -95,5 +107,43 @@ public class UserServiceTest
 
         assertThat(response.token()).isNotEmpty();
         verify(userRepository).existsByEmail(anyString());
+    }
+
+    @Test
+    void shouldGetUserDetails()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+
+        UserResponse result = userService.userDetails(testingUser.getId(), testingUser.getEmail());
+
+        assertThat(result.getName()).isEqualTo(testingUser.getName());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+    @Test
+    void shouldGetExceptionWhenNotFound()
+    {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> userService.userDetails(1111L, testingUser.getEmail()))
+                .withMessageContaining(ApiErrorMessage.USER_NOT_FOUND.getMessage());
+
+        verify(userRepository).findById(anyLong());
+    }
+
+
+    @Test
+    void shouldNotAccessTheDetailsOfAnotherUser()
+    {
+        String email = "userMail@mail.com";
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(testingUser));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> userService.userDetails(testingUser.getId(), email))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(userRepository).findById(anyLong());
     }
 }
