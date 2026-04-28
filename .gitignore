@@ -1,0 +1,53 @@
+# ===============================
+# Java
+# ===============================
+*.class
+*.log
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Gradle (if ever used)
+.gradle/
+build/
+
+# ===============================
+# IDEs
+# ===============================
+.idea/
+*.iml
+*.iws
+*.ipr
+
+.vscode/
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Spring Boot
+# ===============================
+application-local.properties
+application-dev.properties
+
+# ===============================
+# H2 database files (if file mode used)
+# ===============================
+*.mv.db
+*.trace.db
+
+# ===============================
+# Logs
+# ===============================
+logs/
+*.log
+
+# ===============================
+# Maven wrapper (keep these if present)
+# ===============================
+!.mvn/wrapper/maven-wrapper.properties
+!.mvn/wrapper/maven-wrapper.jar
