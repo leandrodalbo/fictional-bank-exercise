@@ -1,5 +1,6 @@
 package com.fictional.bank.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import com.fictional.bank.model.Account;
@@ -10,5 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface AccountRepository extends JpaRepository<Account, Long>
 {
     Set<Account> findByUserId(Long userId);
+    Optional<Account> findByAccountNumber(String accountNumber);
 }
 

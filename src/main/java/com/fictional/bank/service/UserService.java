@@ -4,7 +4,6 @@ import java.util.Date;
 
 import com.fictional.bank.exception.ApiNotDeletableException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +21,8 @@ import com.fictional.bank.response.UserResponse;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+
+import static com.fictional.bank.utils.Utils.validateUser;
 
 @Service
 public class UserService
@@ -143,12 +144,6 @@ public class UserService
         if (userRepository.hasAccounts(userId)) throw new ApiNotDeletableException(ApiErrorMessage.INVALID_REQUEST);
 
         userRepository.deleteById(userId);
-    }
-
-    private void validateUser(String userEmail, String currentUserEmail)
-    {
-        if (!userEmail.equals(currentUserEmail))
-            throw new AccessDeniedException(ApiErrorMessage.INVALID_REQUEST.getMessage());
     }
 
 

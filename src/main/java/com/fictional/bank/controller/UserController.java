@@ -50,24 +50,27 @@ public class UserController
     }
 
     @GetMapping("/{userId}")
-    public UserResponse getUser(@PathVariable Long userId)
+    public UserResponse getUser(@PathVariable String userId)
     {
-        return userService.userDetails(userId, authUtils.getCurrentUser());
+        return userService.userDetails(extractUserId(userId), authUtils.getCurrentUser());
     }
 
     @PatchMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse getUser(@PathVariable Long userId, @RequestBody UpdateUserRequest updateUserRequest)
+    public UserResponse getUser(@PathVariable String userId, @RequestBody UpdateUserRequest updateUserRequest)
     {
-        return userService.updateUserDetails(userId, authUtils.getCurrentUser(), updateUserRequest);
+        return userService.updateUserDetails(extractUserId(userId), authUtils.getCurrentUser(), updateUserRequest);
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long userId)
+    public void deleteUser(@PathVariable String userId)
     {
-        userService.deleteUserDetails(userId, authUtils.getCurrentUser());
+        userService.deleteUserDetails(extractUserId(userId), authUtils.getCurrentUser());
     }
 
+    private Long extractUserId(String userId){
+        return  Long.valueOf(userId.split("usr-")[1]);
+    }
 
 }

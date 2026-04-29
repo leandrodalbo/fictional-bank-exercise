@@ -34,4 +34,10 @@ class AccountRepositoryTests
         assertThat(accountRepository.findByUserId(1L)).isNotEmpty();
     }
 
+    @Test
+    void shouldFindUserByAccountNumber()
+    {
+        assertThat(accountRepository.findByAccountNumber("01000001")).isNotNull();
+    }
+
 }

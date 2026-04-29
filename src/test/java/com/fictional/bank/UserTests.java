@@ -68,7 +68,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(delete("/v1/users/" + user.getId())
+        mockMvc.perform(delete("/v1/users/" + prefixPlusUserId(user))
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
     }
@@ -86,7 +86,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(get("/v1/users/" + user.getId())
+        mockMvc.perform(get("/v1/users/" + prefixPlusUserId(user))
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(user.getEmail()));
@@ -105,7 +105,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(users.get(0));
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(get("/v1/users/" + users.get(1).getId())
+        mockMvc.perform(get("/v1/users/" + prefixPlusUserId(users.get(1)))
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").exists());
@@ -124,7 +124,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(get("/v1/users/99999")
+        mockMvc.perform(get("/v1/users/usr-99999")
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
@@ -144,7 +144,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(patch("/v1/users/" + user.getId())
+        mockMvc.perform(patch("/v1/users/" + prefixPlusUserId(user))
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserRequest)))
@@ -165,7 +165,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(users.get(0));
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/v1/users/" + users.get(1).getId())
+        mockMvc.perform(patch("/v1/users/" + prefixPlusUserId(users.get(1)))
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserRequest)))
@@ -186,7 +186,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/v1/users/99999")
+        mockMvc.perform(patch("/v1/users/usr-99999")
                                 .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserRequest)))
@@ -260,7 +260,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(delete("/v1/users/" + user.getId())
+        mockMvc.perform(delete("/v1/users/" + prefixPlusUserId(user))
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").exists());
@@ -280,7 +280,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(users.get(0));
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(delete("/v1/users/" + users.get(1).getId())
+        mockMvc.perform(delete("/v1/users/" + prefixPlusUserId(users.get(1)))
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").exists());
@@ -300,7 +300,7 @@ class UserTests
         LoginRequest loginRequest = loginRequest(user);
         String token = getLoginToken(loginRequest);
 
-        mockMvc.perform(delete("/v1/users/99999")
+        mockMvc.perform(delete("/v1/users/usr-99999")
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
@@ -329,4 +329,11 @@ class UserTests
     {
         return userRepository.findAll();
     }
+
+    private String prefixPlusUserId(User user)
+    {
+        return "usr-" + user.getId();
+    }
+
+
 }

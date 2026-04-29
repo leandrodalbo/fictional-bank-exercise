@@ -1,0 +1,5 @@
+curl -X POST http://localhost:8080/v1/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "leandro@test.com"
+}'
