@@ -2,6 +2,7 @@ package com.fictional.bank.controller;
 
 
 import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.request.UpdateBankAccountRequest;
 import com.fictional.bank.response.BankAccountResponse;
 import com.fictional.bank.response.ListBankAccountsResponse;
 import com.fictional.bank.security.AuthUtils;
@@ -9,6 +10,7 @@ import com.fictional.bank.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,5 +49,11 @@ public class AccountController
     public BankAccountResponse userAccount(@PathVariable String accountNumber)
     {
         return accountService.userAccountDetails(authUtils.getCurrentUser(), accountNumber);
+    }
+
+    @PatchMapping("/{accountNumber}")
+    public BankAccountResponse patchAccount(@PathVariable String accountNumber, @RequestBody UpdateBankAccountRequest request)
+    {
+        return accountService.updateUserAccountDetails(authUtils.getCurrentUser(), accountNumber, request);
     }
 }

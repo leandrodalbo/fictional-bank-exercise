@@ -2,14 +2,6 @@ package com.fictional.bank;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fictional.bank.model.Account;
-import com.fictional.bank.model.User;
-import com.fictional.bank.repository.AccountRepository;
-import com.fictional.bank.repository.UserRepository;
-import com.fictional.bank.request.CreateBankAccountRequest;
-import com.fictional.bank.request.LoginRequest;
-import com.fictional.bank.utils.Utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -18,17 +10,24 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fictional.bank.model.Account;
+import com.fictional.bank.model.User;
+import com.fictional.bank.repository.AccountRepository;
+import com.fictional.bank.repository.UserRepository;
+import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.utils.Utils;
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -161,6 +160,77 @@ class AccountTests
                                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
 
+    }
+
+    /**
+     * Scenario: User wants to update their bank account details
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/accounts/{accountId} endpoint supplying all the required data
+     * And the account is associated with their userId
+     * Then the system updates the bank account information and returns the updated data
+     */
+    @Test
+    void shouldUpdateOwnBankAccountDetails() throws Exception {
+        List<User> users = getTestingUsers();
+        User user = users.get(0);
+        Account account = getTestingAccounts().stream().filter(it -> it.getUser().getId().equals(user.getId())).findFirst().get();
+        String token = getLoginToken(loginRequest(user));
+
+        String newName = "Updated Account Name";
+
+        var updateRequest = new com.fictional.bank.request.UpdateBankAccountRequest(newName, Utils.PERSONAL_ACCOUNT_TYPE);
+
+        mockMvc.perform(patch("/v1/accounts/" + account.getAccountNumber())
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(newName));
+    }
+
+    /**
+     * Scenario: User wants to update another user's bank account details
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/accounts/{accountId} endpoint
+     * And the account is not associated with their userId
+     * Then the system returns a Forbidden status code and error message
+     */
+    @Test
+    void shouldReturnForbiddenWhenUpdatingAnotherUsersAccount() throws Exception {
+        List<User> users = getTestingUsers();
+        User user = users.get(0);
+        Account account = getTestingAccounts().stream().filter(it -> !it.getUser().getId().equals(user.getId())).findFirst().get();
+        String token = getLoginToken(loginRequest(user));
+
+        var updateRequest = new com.fictional.bank.request.UpdateBankAccountRequest("Other Name", Utils.PERSONAL_ACCOUNT_TYPE);
+
+        mockMvc.perform(patch("/v1/accounts/" + account.getAccountNumber())
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    /**
+     * Scenario: User wants to update a non-existent bank account
+     * Given a user has successfully authenticated
+     * When the user makes a PATCH request to the /v1/accounts/{accountId} endpoint
+     * And the accountId doesn't exist
+     * Then the system returns a Not Found status code and error message
+     */
+    @Test
+    void shouldReturnNotFoundWhenUpdatingNonExistentAccount() throws Exception {
+        List<User> users = getTestingUsers();
+        User user = users.get(0);
+        String token = getLoginToken(loginRequest(user));
+
+        var updateRequest = new com.fictional.bank.request.UpdateBankAccountRequest("Nonexistent", Utils.PERSONAL_ACCOUNT_TYPE);
+
+        mockMvc.perform(patch("/v1/accounts/9999999")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isNotFound());
     }
 
     private String getLoginToken(LoginRequest request) throws Exception

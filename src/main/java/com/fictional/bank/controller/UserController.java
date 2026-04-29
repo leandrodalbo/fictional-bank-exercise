@@ -55,8 +55,7 @@ public class UserController
     }
 
     @PatchMapping("/{userId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse getUser(@PathVariable String userId, @RequestBody UpdateUserRequest updateUserRequest)
+    public UserResponse patchUser(@PathVariable String userId, @RequestBody UpdateUserRequest updateUserRequest)
     {
         return userService.updateUserDetails(extractUserId(userId), authUtils.getCurrentUser(), updateUserRequest);
     }
