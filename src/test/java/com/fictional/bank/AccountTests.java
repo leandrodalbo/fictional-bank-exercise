@@ -17,8 +17,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fictional.bank.model.Account;
-import com.fictional.bank.model.User;
+import com.fictional.bank.entity.Account;
+import com.fictional.bank.entity.User;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateBankAccountRequest;

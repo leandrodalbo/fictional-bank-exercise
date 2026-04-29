@@ -3,7 +3,7 @@ package com.fictional.bank.repository;
 import java.util.Optional;
 import java.util.Set;
 
-import com.fictional.bank.model.Account;
+import com.fictional.bank.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

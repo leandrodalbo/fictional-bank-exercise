@@ -1,4 +1,4 @@
-package com.fictional.bank.model;
+package com.fictional.bank.entity;
 
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotBlank;

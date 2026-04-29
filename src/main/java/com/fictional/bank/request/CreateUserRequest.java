@@ -1,6 +1,6 @@
 package com.fictional.bank.request;
 
-import com.fictional.bank.model.UserAddress;
+import com.fictional.bank.entity.UserAddress;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.Random;
 
 import com.fictional.bank.exception.ApiErrorMessage;
-import com.fictional.bank.exception.ApiNotDeletableException;
 import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.request.CreateBankAccountRequest;
 
@@ -14,8 +13,8 @@ import com.fictional.bank.response.ListBankAccountsResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fictional.bank.model.Account;
-import com.fictional.bank.model.User;
+import com.fictional.bank.entity.Account;
+import com.fictional.bank.entity.User;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
 

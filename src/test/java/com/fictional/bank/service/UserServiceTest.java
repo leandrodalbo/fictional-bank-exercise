@@ -9,8 +9,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOf
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiNotDeletableException;
 import com.fictional.bank.exception.ApiNotFoundException;
-import com.fictional.bank.model.User;
-import com.fictional.bank.model.UserAddress;
+import com.fictional.bank.entity.User;
+import com.fictional.bank.entity.UserAddress;
 import com.fictional.bank.request.LoginRequest;
 import com.fictional.bank.request.UpdateUserRequest;
 import com.fictional.bank.response.LoginResponse;
@@ -37,7 +37,6 @@ import org.springframework.security.access.AccessDeniedException;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest
 {
-
     private final String secret = "uQw8vQ1pQ2t6bXJ5dGZzZ2hqa2xtbm9wcXJzdHV2d3h5eg==";
     private final Long expiration = 86400000L;
     private final User testingUser = new User(

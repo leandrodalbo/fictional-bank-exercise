@@ -7,9 +7,9 @@ import java.util.Set;
 
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiNotFoundException;
-import com.fictional.bank.model.Account;
-import com.fictional.bank.model.User;
-import com.fictional.bank.model.UserAddress;
+import com.fictional.bank.entity.Account;
+import com.fictional.bank.entity.User;
+import com.fictional.bank.entity.UserAddress;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateBankAccountRequest;

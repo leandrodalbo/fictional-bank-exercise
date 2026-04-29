@@ -35,7 +35,8 @@ CREATE TABLE transactions (
     account_id BIGINT NOT NULL,
     type VARCHAR(20) NOT NULL,
     amount DECIMAL(19,2) NOT NULL,
-    description VARCHAR(255),
+    currency VARCHAR(3) NOT NULL,
+    reference VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_transactions_account

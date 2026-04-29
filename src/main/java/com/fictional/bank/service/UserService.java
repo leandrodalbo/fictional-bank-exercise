@@ -11,7 +11,7 @@ import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiException;
 import com.fictional.bank.exception.ApiLoginException;
 import com.fictional.bank.exception.ApiNotFoundException;
-import com.fictional.bank.model.User;
+import com.fictional.bank.entity.User;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateUserRequest;
 import com.fictional.bank.request.LoginRequest;

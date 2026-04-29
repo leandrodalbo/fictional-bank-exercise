@@ -1,4 +1,4 @@
-package com.fictional.bank.model;
+package com.fictional.bank.entity;
 
 import java.time.LocalDateTime;
 

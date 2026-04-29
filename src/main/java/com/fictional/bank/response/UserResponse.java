@@ -1,6 +1,6 @@
 package com.fictional.bank.response;
 
-import com.fictional.bank.model.UserAddress;
+import com.fictional.bank.entity.UserAddress;
 
 public record UserResponse(
         String id,

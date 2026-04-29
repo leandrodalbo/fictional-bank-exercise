@@ -20,8 +20,8 @@ INSERT INTO accounts (
 (2, '01000003', '11-11-11', 'Business Account', 'other', 999.99, 'GBP', NOW(), NOW());
 
 -- Transactions
-INSERT INTO transactions (account_id, type, amount, description) VALUES
-(1, 'CREDIT', 1000.00, 'Initial deposit'),
-(1, 'DEBIT', 50.00, 'Coffee shop'),
-(2, 'CREDIT', 250.50, 'Refund'),
-(3, 'CREDIT', 999.99, 'Salary payment');
+INSERT INTO transactions (account_id, type, amount, currency, reference) VALUES
+(1, 'deposit', 1000.00, 'GBP', 'Initial deposit'),
+(1, 'withdrawal', 50.00, 'GBP', 'Coffee shop'),
+(2, 'deposit', 250.50, 'GBP', 'Refund'),
+(3, 'deposit', 999.99, 'GBP', 'Salary payment');
