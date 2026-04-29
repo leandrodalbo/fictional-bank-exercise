@@ -44,6 +44,7 @@ class UserTests
     static PostgreSQLContainer<?> container =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:alpine"));
     private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
+
     @Autowired
     protected MockMvc mockMvc;
 

@@ -4,10 +4,20 @@ INSERT INTO users (name, email, phone_number, address_line1, address_line2, addr
 ('Deleting User', 'deleteme@test.com', '+441112223333', '777 High St', 'Apt 555', NULL, 'Manchester', 'Greater Manchester', 'M1 444');
 
 -- Accounts
-INSERT INTO accounts (user_id, account_number, balance, currency) VALUES
-(1, 'ACC-1001', 1500.00, 'GBP'),
-(1, 'ACC-1002', 250.50, 'GBP'),
-(2, 'ACC-2001', 999.99, 'GBP');
+INSERT INTO accounts (
+    user_id, 
+    account_number, 
+    sort_code, 
+    account_name, 
+    account_type, 
+    balance, 
+    currency, 
+    created_at, 
+    updated_at
+) VALUES
+(1, 'ACC-1001', '10-10-11', 'Personal Account', 'personal', 1500.00, 'GBP', NOW(), NOW()),
+(1, 'ACC-1002', '10-11-11', 'Savings Account', 'personal', 250.50, 'GBP', NOW(), NOW()),
+(2, 'ACC-2001', '11-11-11', 'Business Account', 'other', 999.99, 'GBP', NOW(), NOW());
 
 -- Transactions
 INSERT INTO transactions (account_id, type, amount, description) VALUES

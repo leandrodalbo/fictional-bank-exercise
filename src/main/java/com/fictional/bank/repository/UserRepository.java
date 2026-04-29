@@ -10,7 +10,7 @@ import com.fictional.bank.model.User;
 public interface UserRepository extends JpaRepository<User, Long>
 {
     boolean existsByEmail(String email);
-
+    User findByEmail(String email);
 
     @Query("SELECT COUNT(a) > 0 FROM Account a WHERE a.user.id = :userId")
     boolean hasAccounts(Long userId);

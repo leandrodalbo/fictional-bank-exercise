@@ -17,9 +17,13 @@ CREATE TABLE accounts (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_id BIGINT NOT NULL,
     account_number VARCHAR(50) NOT NULL UNIQUE,
+    sort_code VARCHAR(20) NOT NULL,
+    account_name VARCHAR(50) NOT NULL,
+    account_type VARCHAR(30) NOT NULL,
     balance DECIMAL(19,2) NOT NULL DEFAULT 0.00,
     currency VARCHAR(3) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
 
     CONSTRAINT fk_accounts_user
         FOREIGN KEY (user_id)

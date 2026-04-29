@@ -5,9 +5,8 @@ import com.fictional.bank.request.LoginRequest;
 import com.fictional.bank.request.UpdateUserRequest;
 import com.fictional.bank.response.LoginResponse;
 
+import com.fictional.bank.security.AuthUtils;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -29,12 +28,13 @@ import jakarta.validation.Valid;
 public class UserController
 {
     private final UserService userService;
+    private final AuthUtils authUtils;
 
-    public UserController(UserService userService)
+    public UserController(UserService userService, AuthUtils authUtils)
     {
         this.userService = userService;
+        this.authUtils = authUtils;
     }
-
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,27 +52,22 @@ public class UserController
     @GetMapping("/{userId}")
     public UserResponse getUser(@PathVariable Long userId)
     {
-        return userService.userDetails(userId, getCurrentUser());
+        return userService.userDetails(userId, authUtils.getCurrentUser());
     }
 
     @PatchMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse getUser(@PathVariable Long userId, @RequestBody UpdateUserRequest updateUserRequest)
     {
-        return userService.updateUserDetails(userId, getCurrentUser(), updateUserRequest);
+        return userService.updateUserDetails(userId, authUtils.getCurrentUser(), updateUserRequest);
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Long userId)
     {
-        userService.deleteUserDetails(userId, getCurrentUser());
+        userService.deleteUserDetails(userId, authUtils.getCurrentUser());
     }
 
-    public String getCurrentUser()
-    {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
 
-    }
 }

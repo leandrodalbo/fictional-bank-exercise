@@ -30,9 +30,15 @@ class UserRepositoryTests
     protected UserRepository userRepository;
 
     @Test
-    void shouldFindUserByMail()
+    void shouldCheckUserByMail()
     {
         assertThat(userRepository.existsByEmail("john.smith@test.com")).isTrue();
+    }
+
+    @Test
+    void shouldFindUserByMail()
+    {
+        assertThat(userRepository.findByEmail("john.smith@test.com").getName()).isNotEmpty();
     }
 
     @Test

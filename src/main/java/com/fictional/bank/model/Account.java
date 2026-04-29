@@ -8,12 +8,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Builder;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -24,7 +26,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Account {
+public class Account
+{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,6 +39,15 @@ public class Account {
     @Column(name = "account_number", nullable = false, unique = true, length = 50)
     private String accountNumber;
 
+    @Column(name = "sort_code", nullable = false, unique = true, length = 20)
+    private String sortCode;
+
+    @Column(name = "account_name", nullable = false, unique = true, length = 50)
+    private String accountName;
+
+    @Column(name = "account_type", nullable = false, unique = true, length = 30)
+    private String accountType;
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
 
@@ -45,8 +57,19 @@ public class Account {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
-    protected void onCreate() {
+    protected void onCreate()
+    {
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate()
+    {
+        this.updatedAt = LocalDateTime.now();
     }
 }
