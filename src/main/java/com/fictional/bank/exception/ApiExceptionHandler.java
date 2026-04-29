@@ -18,14 +18,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class ApiExceptionHandler
 {
 
-    @ExceptionHandler(ApiException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public BadRequestErrorResponse handleBadRequestException(ApiException ex)
-    {
-        return new BadRequestErrorResponse(ex.getMessage(), Collections.emptyList());
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -61,6 +53,14 @@ public class ApiExceptionHandler
     public ErrorResponse handleConflictException(ApiNotDeletableException ex)
     {
         return new ErrorResponse(ex.getMessage());
+    }
+
+    @ExceptionHandler(ApiException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public BadRequestErrorResponse handleBadRequestException(ApiException ex)
+    {
+        return new BadRequestErrorResponse(ex.getMessage(), Collections.emptyList());
     }
 
     @ExceptionHandler(Exception.class)

@@ -5,12 +5,15 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import com.fictional.bank.exception.ApiErrorMessage;
+import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.model.Account;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.request.UpdateBankAccountRequest;
 import com.fictional.bank.response.BankAccountResponse;
 import com.fictional.bank.response.ListBankAccountsResponse;
 import com.fictional.bank.utils.Utils;
@@ -19,11 +22,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +58,10 @@ public class AccountServiceTest
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
+
+    private final UpdateBankAccountRequest updateBankAccountRequest = new UpdateBankAccountRequest(
+            "UPDATED-NAME", "OTHER-TYPE"
+    );
 
 
     @Mock
@@ -100,14 +110,59 @@ public class AccountServiceTest
     @Test
     void shouldGetUserSingleAccountDetails()
     {
-        when(userRepository.findByEmail(anyString())).thenReturn(testingUser);
+
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
 
         BankAccountResponse result = accountService.userAccountDetails(testingUser.getEmail(), testingAccount.getAccountNumber());
 
         assertThat(result).isNotNull();
 
-        verify(userRepository).findByEmail(anyString());
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+
+    @Test
+    void shouldUpdateUserAccountDetails()
+    {
+
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(accountRepository.save(any())).thenReturn(testingAccount);
+
+        BankAccountResponse response = accountService.updateUserAccountDetails(testingUser.getEmail(), testingAccount.getAccountNumber(), updateBankAccountRequest);
+
+        assertThat(response.accountType()).isEqualTo(updateBankAccountRequest.accountType());
+
+        verify(accountRepository).save(any());
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+    @Test
+    void shouldNotUpdateForAccountNotFound()
+    {
+
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> accountService.updateUserAccountDetails(testingUser.getEmail(), testingAccount.getAccountNumber(), updateBankAccountRequest))
+                .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
+
+
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+
+    @Test
+    void shouldNotUpdateTheDetailsOfAnotherUser()
+    {
+        String email = "userMail@mail.com";
+
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> accountService.updateUserAccountDetails(email, testingAccount.getAccountNumber(), updateBankAccountRequest))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+
         verify(accountRepository).findByAccountNumber(anyString());
     }
 

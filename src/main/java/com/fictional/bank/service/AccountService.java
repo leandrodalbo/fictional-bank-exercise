@@ -85,10 +85,9 @@ public class AccountService
 
     public BankAccountResponse userAccountDetails(String userMail, String accountNumber)
     {
-        User savedUser = userRepository.findByEmail(userMail);
         Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.ACCOUNT_NOT_FOUND));
 
-        validateUser(savedUser.getEmail(), account.getUser().getEmail());
+        validateUser(userMail, account.getUser().getEmail());
 
         return new BankAccountResponse(
                 account.getAccountNumber(),
@@ -105,10 +104,9 @@ public class AccountService
     @Transactional
     public BankAccountResponse updateUserAccountDetails(String userMail, String accountNumber, UpdateBankAccountRequest request)
     {
-        User savedUser = userRepository.findByEmail(userMail);
         Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.ACCOUNT_NOT_FOUND));
 
-        validateUser(savedUser.getEmail(), account.getUser().getEmail());
+        validateUser(userMail, account.getUser().getEmail());
 
         account.setAccountType(request.accountType());
         account.setAccountName(request.name());
