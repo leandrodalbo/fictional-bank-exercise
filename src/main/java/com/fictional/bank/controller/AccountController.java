@@ -9,6 +9,7 @@ import com.fictional.bank.security.AuthUtils;
 import com.fictional.bank.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,5 +56,12 @@ public class AccountController
     public BankAccountResponse patchAccount(@PathVariable String accountNumber, @RequestBody UpdateBankAccountRequest request)
     {
         return accountService.updateUserAccountDetails(authUtils.getCurrentUser(), accountNumber, request);
+    }
+
+    @DeleteMapping("/{accountNumber}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUserAccount(@PathVariable String accountNumber)
+    {
+        accountService.deleteUserAccount(authUtils.getCurrentUser(), accountNumber);
     }
 }

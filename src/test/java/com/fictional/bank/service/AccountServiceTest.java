@@ -166,5 +166,45 @@ public class AccountServiceTest
         verify(accountRepository).findByAccountNumber(anyString());
     }
 
+    @Test
+    void shouldDeleteUserAccountDetails()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        doNothing().when(accountRepository).deleteById(anyLong());
+
+        accountService.deleteUserAccount(testingUser.getEmail(), testingAccount.getAccountNumber());
+
+
+        verify(accountRepository).findByAccountNumber(anyString());
+        verify(accountRepository).deleteById(anyLong());
+
+    }
+
+    @Test
+    void shouldNotDeleteAnAccountWhenNotFound()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> accountService.deleteUserAccount(testingUser.getEmail(), testingAccount.getAccountNumber()))
+                .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
+
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+
+    @Test
+    void shouldNotDeleteAnotherUserAccount()
+    {
+        String email = "userMail@mail.com";
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> accountService.deleteUserAccount(email, testingAccount.getAccountNumber()))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
 
 }

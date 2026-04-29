@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Random;
 
 import com.fictional.bank.exception.ApiErrorMessage;
+import com.fictional.bank.exception.ApiNotDeletableException;
 import com.fictional.bank.exception.ApiNotFoundException;
 import com.fictional.bank.request.CreateBankAccountRequest;
 
@@ -125,6 +126,15 @@ public class AccountService
         );
     }
 
+    @Transactional
+    public void deleteUserAccount(String userMail, String accountNumber)
+    {
+        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.ACCOUNT_NOT_FOUND));
+
+        validateUser(account.getUser().getEmail(), userMail);
+
+        accountRepository.deleteById(account.getId());
+    }
 
     private String generateAccountNumber()
     {

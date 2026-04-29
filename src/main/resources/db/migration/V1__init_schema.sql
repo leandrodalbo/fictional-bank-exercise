@@ -41,4 +41,5 @@ CREATE TABLE transactions (
     CONSTRAINT fk_transactions_account
         FOREIGN KEY (account_id)
         REFERENCES accounts(id)
+        ON DELETE CASCADE
 );
