@@ -1,15 +1,17 @@
 package com.fictional.bank.exception;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
 
+import com.fictional.bank.response.BadRequestErrorResponse;
+import com.fictional.bank.response.ErrorResponse;
+import com.fictional.bank.response.ValidationErrorDetail;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
@@ -18,66 +20,54 @@ public class ApiExceptionHandler
 
     @ExceptionHandler(ApiException.class)
     @ResponseBody
-    public ResponseEntity<Object> handleApiException(ApiException ex)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public BadRequestErrorResponse handleBadRequestException(ApiException ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ex.getErrorMessage().getMessage());
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        return new BadRequestErrorResponse(ex.getMessage(), Collections.emptyList());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
-    public ResponseEntity<Object> handleValidationException(MethodArgumentNotValidException ex)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public BadRequestErrorResponse handleValidationException(MethodArgumentNotValidException ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", "Validation failed");
+        List<ValidationErrorDetail> detailList = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ValidationErrorDetail(error.getField(), error.getDefaultMessage(), error.getCode()))
+                .toList();
 
-        body.put("details", ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .toArray());
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        return new BadRequestErrorResponse(ex.getMessage(), detailList);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseBody
-    public ResponseEntity<Object> handleForbiddenException(AccessDeniedException ex)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleForbiddenException(AccessDeniedException ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+        return new ErrorResponse(ex.getMessage());
     }
 
     @ExceptionHandler(ApiNotFoundException.class)
     @ResponseBody
-    public ResponseEntity<Object> handleNotFoundException(ApiNotFoundException ex)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleNotFoundException(ApiNotFoundException ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+
+        return new ErrorResponse(ex.getMessage());
     }
 
     @ExceptionHandler(ApiNotDeletableException.class)
     @ResponseBody
-    public ResponseEntity<Object> handleNotFoundException(ApiNotDeletableException ex)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleConflictException(ApiNotDeletableException ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+        return new ErrorResponse(ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseBody
-    public ResponseEntity<Object> handleGenericException(Exception ex)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGenericException(Exception ex)
     {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("message", ApiErrorMessage.INTERNAL_ERROR.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ErrorResponse(ApiErrorMessage.INTERNAL_ERROR.getMessage());
     }
 }

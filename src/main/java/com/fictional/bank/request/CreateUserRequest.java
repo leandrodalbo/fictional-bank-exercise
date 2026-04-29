@@ -1,29 +1,28 @@
 package com.fictional.bank.request;
 
-
 import com.fictional.bank.model.UserAddress;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import jakarta.validation.constraints.Pattern;
 
-@Getter
-@AllArgsConstructor
-public class CreateUserRequest {
-    @NotBlank
-    private String name;
+public record CreateUserRequest(
 
-    @NotNull
-    @Valid
-    private UserAddress address;
+        @NotBlank
+        String name,
 
-    @NotBlank
-    private String phoneNumber;
+        @NotNull
+        @Valid
+        UserAddress address,
 
-    @NotBlank
-    @Email
-    private String email;
+        @NotBlank
+        @Pattern(regexp = "^\\+[1-9]\\d{1,14}$")
+        String phoneNumber,
+
+        @NotBlank
+        @Email
+        String email
+)
+{
 }

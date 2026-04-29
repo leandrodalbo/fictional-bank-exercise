@@ -1,7 +1,6 @@
 package com.fictional.bank;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fictional.bank.repository.UserRepository;
@@ -43,7 +42,7 @@ class UserTests
     @ServiceConnection
     static PostgreSQLContainer<?> container =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:alpine"));
-    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
+    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest("updating-name", new UserAddress("l1", "l2", "l3", "town", "", ""), "+4498216847", "updated@mail.com");
 
     @Autowired
     protected MockMvc mockMvc;
@@ -149,7 +148,7 @@ class UserTests
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updateUserRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value(updateUserRequest.getEmail().get()));
+                .andExpect(jsonPath("$.email").value(updateUserRequest.email()));
     }
 
     /**

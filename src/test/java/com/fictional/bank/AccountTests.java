@@ -4,12 +4,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fictional.bank.model.Account;
-import com.fictional.bank.model.AccountType;
 import com.fictional.bank.model.User;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
-import com.fictional.bank.request.CreateAccountRequest;
+import com.fictional.bank.request.CreateBankAccountRequest;
 import com.fictional.bank.request.LoginRequest;
+import com.fictional.bank.utils.Utils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -44,7 +44,6 @@ class AccountTests
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:alpine"));
 
 
-
     @Autowired
     protected MockMvc mockMvc;
 
@@ -65,7 +64,7 @@ class AccountTests
     @Test
     void shouldCreateANewUserAccount() throws Exception
     {
-        CreateAccountRequest request = new CreateAccountRequest("My Personal Account", AccountType.PERSONAL);
+        CreateBankAccountRequest request = new CreateBankAccountRequest("My Personal Account", Utils.PERSONAL_ACCOUNT_TYPE);
         List<User> users = getTestingUsers();
         User user = users.get(0);
         LoginRequest loginRequest = loginRequest(user);
@@ -88,7 +87,7 @@ class AccountTests
     @Test
     void shouldNotCreateAUserAccount() throws Exception
     {
-        CreateAccountRequest request = new CreateAccountRequest("", AccountType.PERSONAL);
+        CreateBankAccountRequest request = new CreateBankAccountRequest("", Utils.PERSONAL_ACCOUNT_TYPE);
         List<User> users = getTestingUsers();
         User user = users.get(0);
         LoginRequest loginRequest = loginRequest(user);
@@ -100,7 +99,6 @@ class AccountTests
                                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
-
 
 
     /**

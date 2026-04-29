@@ -1,18 +1,22 @@
 package com.fictional.bank.request;
 
-
-import java.util.Optional;
-
 import com.fictional.bank.model.UserAddress;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 
-@Getter
-@AllArgsConstructor
-public class UpdateUserRequest
+public record UpdateUserRequest(
+
+        String name,
+
+        @Valid
+        UserAddress address,
+
+        @Pattern(regexp = "^\\+[1-9]\\d{1,14}$")
+        String phoneNumber,
+
+        @Email
+        String email
+)
 {
-    private Optional<String> name;
-    private Optional<UserAddress> address;
-    private Optional<String> phoneNumber;
-    private Optional<String> email;
 }

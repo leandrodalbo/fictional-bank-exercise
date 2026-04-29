@@ -60,7 +60,7 @@ public class UserServiceTest
             LocalDateTime.now()
     );
 
-    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest(Optional.empty(), Optional.empty(), Optional.empty(), Optional.of("updated@mail.com"));
+    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest("updating-name", new UserAddress("l1", "l2", "l3", "town", "", ""), "+4498216847", "updated@mail.com");
 
     @Mock
     private UserRepository userRepository;
@@ -77,7 +77,7 @@ public class UserServiceTest
     {
         String email = "any@mail.com";
         CreateUserRequest request = org.mockito.Mockito.mock(CreateUserRequest.class);
-        when(request.getEmail()).thenReturn(email);
+        when(request.email()).thenReturn(email);
         when(userRepository.existsByEmail(email)).thenReturn(true);
 
         assertThatExceptionOfType(ApiException.class)
@@ -108,8 +108,7 @@ public class UserServiceTest
 
         UserResponse res = userService.createNewUser(request);
 
-        assertThat(res.getId()).isNotNull();
-        assertThat(res.getAddress()).isNotNull();
+        assertThat(res.address()).isNotNull();
         verify(userRepository).existsByEmail(email);
     }
 
@@ -132,7 +131,7 @@ public class UserServiceTest
 
         UserResponse result = userService.userDetails(testingUser.getId(), testingUser.getEmail());
 
-        assertThat(result.getName()).isEqualTo(testingUser.getName());
+        assertThat(result.name()).isEqualTo(testingUser.getName());
 
         verify(userRepository).findById(anyLong());
     }
@@ -172,7 +171,7 @@ public class UserServiceTest
 
         UserResponse result = userService.updateUserDetails(testingUser.getId(), testingUser.getEmail(), updateUserRequest);
 
-        assertThat(result.getEmail()).isEqualTo(updatedUser.getEmail());
+        assertThat(result.email()).isEqualTo(updatedUser.getEmail());
 
         verify(userRepository).findById(anyLong());
         verify(userRepository).save(any());
@@ -188,7 +187,7 @@ public class UserServiceTest
 
         UserResponse result = userService.updateUserDetails(testingUser.getId(), testingUser.getEmail(), updateUserRequest);
 
-        assertThat(result.getName()).isEqualTo("new name");
+        assertThat(result.name()).isEqualTo("new name");
 
         verify(userRepository).findById(anyLong());
         verify(userRepository).save(any());

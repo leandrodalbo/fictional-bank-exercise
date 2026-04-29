@@ -1,10 +1,9 @@
 package com.fictional.bank.controller;
 
 
-import java.util.Set;
-
-import com.fictional.bank.request.CreateAccountRequest;
-import com.fictional.bank.response.AccountResponse;
+import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.response.BankAccountResponse;
+import com.fictional.bank.response.ListBankAccountsResponse;
 import com.fictional.bank.security.AuthUtils;
 import com.fictional.bank.service.AccountService;
 import jakarta.validation.Valid;
@@ -32,20 +31,20 @@ public class AccountController
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public AccountResponse signUpUser(@Valid @RequestBody CreateAccountRequest request)
+    public BankAccountResponse signUpUser(@Valid @RequestBody CreateBankAccountRequest request)
     {
         return this.accountService.createNewAccount(authUtils.getCurrentUser(), request);
     }
 
     @GetMapping
-    public Set<AccountResponse> userAccounts()
+    public ListBankAccountsResponse userAccounts()
     {
         return accountService.userAccountsDetails(authUtils.getCurrentUser());
     }
 
 
     @GetMapping("/{accountNumber}")
-    public AccountResponse userAccount(@PathVariable String accountNumber)
+    public BankAccountResponse userAccount(@PathVariable String accountNumber)
     {
         return accountService.userAccountDetails(authUtils.getCurrentUser(), accountNumber);
     }

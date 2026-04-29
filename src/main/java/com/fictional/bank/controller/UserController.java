@@ -4,7 +4,6 @@ package com.fictional.bank.controller;
 import com.fictional.bank.request.LoginRequest;
 import com.fictional.bank.request.UpdateUserRequest;
 import com.fictional.bank.response.LoginResponse;
-
 import com.fictional.bank.security.AuthUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;

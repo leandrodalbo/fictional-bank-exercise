@@ -6,14 +6,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.fictional.bank.model.Account;
-import com.fictional.bank.model.AccountType;
-import com.fictional.bank.model.Currency;
 import com.fictional.bank.model.User;
 import com.fictional.bank.model.UserAddress;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
-import com.fictional.bank.request.CreateAccountRequest;
-import com.fictional.bank.response.AccountResponse;
+import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.response.BankAccountResponse;
+import com.fictional.bank.response.ListBankAccountsResponse;
+import com.fictional.bank.utils.Utils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ public class AccountServiceTest
             .accountName("Personal Account")
             .accountType("personal")
             .balance(BigDecimal.ZERO)
-            .currency(Currency.GBP.getValue())
+            .currency(Utils.GBP_CURRENCY)
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
@@ -72,8 +72,7 @@ public class AccountServiceTest
     @Test
     void shouldCreateANewUser()
     {
-
-        CreateAccountRequest request = new CreateAccountRequest("new account", AccountType.PERSONAL);
+        CreateBankAccountRequest request = new CreateBankAccountRequest("new account", Utils.PERSONAL_ACCOUNT_TYPE);
 
         when(userRepository.findByEmail(testingUser.getEmail())).thenReturn(testingUser);
         when(accountRepository.save(any())).thenReturn(testingAccount);
@@ -90,9 +89,9 @@ public class AccountServiceTest
         when(userRepository.findByEmail(anyString())).thenReturn(testingUser);
         when(accountRepository.findByUserId(anyLong())).thenReturn(Set.of(testingAccount));
 
-        Set<AccountResponse> result = accountService.userAccountsDetails(testingUser.getEmail());
+        ListBankAccountsResponse result = accountService.userAccountsDetails(testingUser.getEmail());
 
-        assertThat(result.isEmpty()).isFalse();
+        assertThat(result.accounts().isEmpty()).isFalse();
 
         verify(userRepository).findByEmail(anyString());
         verify(accountRepository).findByUserId(anyLong());
@@ -104,7 +103,7 @@ public class AccountServiceTest
         when(userRepository.findByEmail(anyString())).thenReturn(testingUser);
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
 
-        AccountResponse result = accountService.userAccountDetails(testingUser.getEmail(), testingAccount.getAccountNumber());
+        BankAccountResponse result = accountService.userAccountDetails(testingUser.getEmail(), testingAccount.getAccountNumber());
 
         assertThat(result).isNotNull();
 

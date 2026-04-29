@@ -46,16 +46,16 @@ public class UserService
     @Transactional
     public UserResponse createNewUser(CreateUserRequest request)
     {
-        if (userRepository.existsByEmail(request.getEmail()))
+        if (userRepository.existsByEmail(request.email()))
         {
             throw new ApiException(ApiErrorMessage.EMAIL_ALREADY_EXISTS);
         }
 
         User user = User.builder()
-                .name(request.getName())
-                .address(request.getAddress())
-                .email(request.getEmail())
-                .phoneNumber(request.getPhoneNumber())
+                .name(request.name())
+                .address(request.address())
+                .email(request.email())
+                .phoneNumber(request.phoneNumber())
                 .build();
 
         User saved = this.userRepository.save(user);
@@ -108,17 +108,17 @@ public class UserService
     public UserResponse updateUserDetails(long userId, String userMail, UpdateUserRequest request)
     {
 
-        User saved = userRepository.findById(userId)
+        User savedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.USER_NOT_FOUND));
 
-        validateUser(saved.getEmail(), userMail);
+        validateUser(savedUser.getEmail(), userMail);
 
-        request.getName().ifPresent(saved::setName);
-        request.getAddress().ifPresent(saved::setAddress);
-        request.getPhoneNumber().ifPresent(saved::setPhoneNumber);
-        request.getEmail().ifPresent(saved::setEmail);
+        savedUser.setName(request.name());
+        savedUser.setAddress(request.address());
+        savedUser.setPhoneNumber(request.phoneNumber());
+        savedUser.setEmail(request.email());
 
-        User updated = userRepository.save(saved);
+        User updated = userRepository.save(savedUser);
 
         return new UserResponse(
                 updated.getId().toString(),
