@@ -9,6 +9,7 @@ import static com.fictional.bank.TestingUtils.testingAccount;
 import static com.fictional.bank.TestingUtils.transaction;
 import static com.fictional.bank.TestingUtils.testingUser;
 import static com.fictional.bank.TestingUtils.withdrawalTransaction;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fictional.bank.repository.AccountRepository;
@@ -113,5 +115,80 @@ class TransactionServiceTests
                 .isThrownBy(() -> transactionService.handleTransaction("invalid@mail.com", testingAccount.getAccountNumber(), createWithdrawalRequest))
                 .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
     }
+
+    @Test
+    void shouldGetUserTransactions()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
+
+        List<TransactionResponse> result = transactionService
+                .userTransactions(testingUser.getEmail(), testingAccount.getAccountNumber());
+
+        assertThat(result.isEmpty()).isFalse();
+
+        verify(accountRepository).findByAccountNumber(anyString());
+        verify(transactionRepository).findByAccountId(anyLong());
+    }
+
+    @Test
+    void itIsNastyToCheckSomeoneElseTransactions()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> transactionService.userTransactions("invalid@mail.com", testingAccount.getAccountNumber()))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+    @Test
+    void shouldNotGetTransactionsForInvalidAccounts()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> transactionService.userTransactions("invalid@mail.com", testingAccount.getAccountNumber()))
+                .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void shouldGetUserTransaction()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(transactionRepository.findTransaction(anyLong(), anyLong())).thenReturn(Optional.of(transaction));
+
+        TransactionResponse result = transactionService
+                .userTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), 1L);
+
+        assertThat(result).isNotNull();
+
+        verify(accountRepository).findByAccountNumber(anyString());
+        verify(transactionRepository).findTransaction(anyLong(), anyLong());
+    }
+
+    @Test
+    void itIsNastyToCheckSomeoneElseTransaction()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> transactionService.userTransaction("invalid@mail.com", testingAccount.getAccountNumber(), 2L))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+
+        verify(accountRepository).findByAccountNumber(anyString());
+    }
+
+    @Test
+    void shouldNotGetATransactionForInvalidAccounts()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> transactionService.userTransaction("invalid@mail.com", testingAccount.getAccountNumber(), 1L))
+                .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
+    }
+
 
 }

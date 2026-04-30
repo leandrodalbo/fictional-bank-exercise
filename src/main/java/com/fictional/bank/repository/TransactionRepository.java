@@ -1,6 +1,7 @@
 package com.fictional.bank.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.fictional.bank.entity.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,5 +13,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>
 {
     @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId")
     List<Transaction> findByAccountId(Long accountId);
+
+    @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId AND t.id = :transactionId")
+    Optional<Transaction> findTransaction(Long accountId, Long transactionId);
 }
 

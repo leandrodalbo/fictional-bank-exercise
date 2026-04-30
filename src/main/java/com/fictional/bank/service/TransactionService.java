@@ -2,6 +2,7 @@ package com.fictional.bank.service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import com.fictional.bank.entity.Account;
 import com.fictional.bank.entity.Transaction;
@@ -27,6 +28,48 @@ public class TransactionService
     {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
+    }
+
+    public List<TransactionResponse> userTransactions(String userMail, String accountNumber)
+    {
+        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.ACCOUNT_NOT_FOUND));
+
+        validateUser(account.getUser().getEmail(), userMail);
+
+        List<Transaction> accountTransactions = transactionRepository.findByAccountId(account.getId());
+
+        return accountTransactions.stream().map(
+                it -> new TransactionResponse(
+                        it.getId().toString(),
+                        it.getAmount(),
+                        it.getCurrency(),
+                        it.getType(),
+                        it.getReference(),
+                        it.getAccount().getUser().getId().toString(),
+                        it.getCreatedAt().toString()
+                )
+        ).toList();
+
+    }
+
+    public TransactionResponse userTransaction(String userMail, String accountNumber, Long transactionId)
+    {
+        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.ACCOUNT_NOT_FOUND));
+
+        validateUser(account.getUser().getEmail(), userMail);
+
+        Transaction it = transactionRepository.findTransaction(account.getId(), transactionId)
+                .orElseThrow(() -> new ApiNotFoundException(ApiErrorMessage.TRANSACTION_NOT_FOUND));
+
+        return new TransactionResponse(
+                it.getId().toString(),
+                it.getAmount(),
+                it.getCurrency(),
+                it.getType(),
+                it.getReference(),
+                it.getAccount().getUser().getId().toString(),
+                it.getCreatedAt().toString()
+        );
     }
 
     @Transactional

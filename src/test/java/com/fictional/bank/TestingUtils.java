@@ -75,9 +75,6 @@ public class TestingUtils
             .build();
 
 
-
-
-
     public static final UpdateBankAccountRequest updateBankAccountRequest = new UpdateBankAccountRequest(
             "UPDATED-NAME", "OTHER-TYPE"
     );

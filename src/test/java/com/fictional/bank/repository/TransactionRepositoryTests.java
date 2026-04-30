@@ -35,4 +35,10 @@ class TransactionRepositoryTests
         assertThat(transactionRepository.findByAccountId(1L).isEmpty()).isFalse();
     }
 
+    @Test
+    void shouldFindASingleTransaction()
+    {
+        assertThat(transactionRepository.findTransaction(1L, 1L).isPresent()).isTrue();
+    }
+
 }
