@@ -22,8 +22,6 @@ import com.fictional.bank.entity.UserAddress;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateUserRequest;
 import com.fictional.bank.request.LoginRequest;
-import com.fictional.bank.request.UpdateUserRequest;
-
 import static com.fictional.bank.TestingUtils.updateUserRequest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

@@ -2,11 +2,15 @@ package com.fictional.bank.controller;
 
 
 import com.fictional.bank.request.CreateBankAccountRequest;
+import com.fictional.bank.request.CreateTransactionRequest;
 import com.fictional.bank.request.UpdateBankAccountRequest;
 import com.fictional.bank.response.BankAccountResponse;
 import com.fictional.bank.response.ListBankAccountsResponse;
+import com.fictional.bank.response.ListTransactionsResponse;
+import com.fictional.bank.response.TransactionResponse;
 import com.fictional.bank.security.AuthUtils;
 import com.fictional.bank.service.AccountService;
+import com.fictional.bank.service.TransactionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,11 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountController
 {
     private final AccountService accountService;
+    private final TransactionService transactionService;
+
     private final AuthUtils authUtils;
 
-    public AccountController(AccountService accountService, AuthUtils authUtils)
+    public AccountController(AccountService accountService, TransactionService transactionService, AuthUtils authUtils)
     {
         this.accountService = accountService;
+        this.transactionService = transactionService;
         this.authUtils = authUtils;
     }
 
@@ -63,5 +70,46 @@ public class AccountController
     public void deleteUserAccount(@PathVariable String accountNumber)
     {
         accountService.deleteUserAccount(authUtils.getCurrentUser(), accountNumber);
+    }
+
+    @PostMapping("/{accountNumber}/transactions")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransactionResponse createTransaction(
+            @PathVariable String accountNumber,
+            @Valid @RequestBody CreateTransactionRequest request
+    )
+    {
+        return transactionService.handleTransaction(
+                authUtils.getCurrentUser(),
+                accountNumber,
+                request
+        );
+    }
+
+    @GetMapping("/{accountNumber}/transactions")
+    public ListTransactionsResponse listTransactions(@PathVariable String accountNumber)
+    {
+        return transactionService.userTransactions(
+                authUtils.getCurrentUser(),
+                accountNumber
+        );
+    }
+
+    @GetMapping("/{accountNumber}/transactions/{transactionId}")
+    public TransactionResponse getTransaction(
+            @PathVariable String accountNumber,
+            @PathVariable String transactionId
+    )
+    {
+        return transactionService.userTransaction(
+                authUtils.getCurrentUser(),
+                accountNumber,
+                extractTransactionId(transactionId)
+        );
+    }
+
+    private Long extractTransactionId(String transactionId)
+    {
+        return Long.valueOf(transactionId.split("tan-")[1]);
     }
 }

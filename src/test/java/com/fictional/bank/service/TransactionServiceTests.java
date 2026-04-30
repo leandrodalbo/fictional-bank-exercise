@@ -1,5 +1,6 @@
 package com.fictional.bank.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiException;
 import com.fictional.bank.exception.ApiNotFoundException;
+import com.fictional.bank.response.ListTransactionsResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,7 +60,6 @@ class TransactionServiceTests
     void shouldHandleDepositTransaction()
     {
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
-        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of());
         when(transactionRepository.save(any())).thenReturn(transaction);
 
         TransactionResponse response = transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createTransactionRequest);
@@ -73,8 +74,8 @@ class TransactionServiceTests
     @Test
     void shouldHandleWithdrawalTransaction()
     {
+        testingAccount.setBalance(BigDecimal.valueOf(1000L));
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
-        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
         when(transactionRepository.save(any())).thenReturn(withdrawalTransaction);
 
         TransactionResponse response = transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createWithdrawalRequest);
@@ -87,8 +88,8 @@ class TransactionServiceTests
     @Test
     void shouldFailTheWithdrawalTransaction()
     {
+        testingAccount.setBalance(BigDecimal.ZERO);
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
-        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of());
 
         assertThatExceptionOfType(ApiException.class)
                 .isThrownBy(() -> transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createWithdrawalRequest))
@@ -99,8 +100,6 @@ class TransactionServiceTests
     void shouldFailTheWithInvalidUserEmail()
     {
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
-        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
-
         assertThatExceptionOfType(AccessDeniedException.class)
                 .isThrownBy(() -> transactionService.handleTransaction("invalid@mail.com", testingAccount.getAccountNumber(), createWithdrawalRequest))
                 .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
@@ -110,7 +109,6 @@ class TransactionServiceTests
     void shouldFailForANonExistingAccount()
     {
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
-
         assertThatExceptionOfType(ApiNotFoundException.class)
                 .isThrownBy(() -> transactionService.handleTransaction("invalid@mail.com", testingAccount.getAccountNumber(), createWithdrawalRequest))
                 .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
@@ -122,10 +120,10 @@ class TransactionServiceTests
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
         when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
 
-        List<TransactionResponse> result = transactionService
+        ListTransactionsResponse result = transactionService
                 .userTransactions(testingUser.getEmail(), testingAccount.getAccountNumber());
 
-        assertThat(result.isEmpty()).isFalse();
+        assertThat(result.transactions().isEmpty()).isFalse();
 
         verify(accountRepository).findByAccountNumber(anyString());
         verify(transactionRepository).findByAccountId(anyLong());
