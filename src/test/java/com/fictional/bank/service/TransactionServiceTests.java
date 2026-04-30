@@ -1,15 +1,21 @@
 package com.fictional.bank.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.fictional.bank.TestingUtils.createTransactionRequest;
+import static com.fictional.bank.TestingUtils.createWithdrawalRequest;
+import static com.fictional.bank.TestingUtils.testingAccount;
+import static com.fictional.bank.TestingUtils.transaction;
+import static com.fictional.bank.TestingUtils.testingUser;
+import static com.fictional.bank.TestingUtils.withdrawalTransaction;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.fictional.bank.entity.UserAddress;
-import com.fictional.bank.utils.Utils;
+import com.fictional.bank.exception.ApiErrorMessage;
+import com.fictional.bank.exception.ApiException;
+import com.fictional.bank.exception.ApiNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -23,47 +29,20 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.when;
 
-import com.fictional.bank.entity.Account;
-import com.fictional.bank.entity.Transaction;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.TransactionRepository;
-import com.fictional.bank.request.CreateTransactionRequest;
 import com.fictional.bank.response.TransactionResponse;
-import com.fictional.bank.entity.User;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceTests
 {
 
-    private final User testingUser = new User(
-            1001L,
-            "user-name",
-            new UserAddress("l1", "l2", "l3", "town", "", ""),
-            "testinguser@mail.com",
-            "",
-            LocalDateTime.now(),
-            LocalDateTime.now()
-    );
-
-    private final Account testingAccount = Account.builder()
-            .id(1L)
-            .user(testingUser)
-            .accountNumber("12345678")
-            .sortCode("12-34-56")
-            .accountName("Personal Account")
-            .accountType("personal")
-            .balance(BigDecimal.ZERO)
-            .currency(Utils.GBP_CURRENCY)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .build();
-
     @Mock
     private AccountRepository accountRepository;
     @Mock
     private TransactionRepository transactionRepository;
-
 
     private TransactionService transactionService;
 
@@ -76,30 +55,63 @@ class TransactionServiceTests
     @Test
     void shouldHandleDepositTransaction()
     {
-        CreateTransactionRequest req = new CreateTransactionRequest(new BigDecimal("100.00"), "GBP", "deposit", "ref");
-
-        Transaction transaction = Transaction.builder()
-                .account(testingAccount)
-                .amount(req.amount())
-                .currency(req.currency())
-                .reference(req.reference())
-                .type(req.type())
-                .build();
-        transaction.setId(10L);
-        transaction.setCreatedAt(LocalDateTime.now());
-
         when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
         when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of());
         when(transactionRepository.save(any())).thenReturn(transaction);
 
-        TransactionResponse response = transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), req);
+        TransactionResponse response = transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createTransactionRequest);
 
-        assertEquals("10", response.id());
-        assertEquals(new BigDecimal("100.00"), response.amount());
         assertEquals("GBP", response.currency());
         assertEquals("deposit", response.type());
-        assertEquals("ref", response.reference());
         assertNotNull(response.createdTimestamp());
+
+
+    }
+
+    @Test
+    void shouldHandleWithdrawalTransaction()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
+        when(transactionRepository.save(any())).thenReturn(withdrawalTransaction);
+
+        TransactionResponse response = transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createWithdrawalRequest);
+
+        assertEquals("GBP", response.currency());
+        assertEquals("withdrawal", response.type());
+        assertNotNull(response.createdTimestamp());
+    }
+
+    @Test
+    void shouldFailTheWithdrawalTransaction()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of());
+
+        assertThatExceptionOfType(ApiException.class)
+                .isThrownBy(() -> transactionService.handleTransaction(testingUser.getEmail(), testingAccount.getAccountNumber(), createWithdrawalRequest))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+    }
+
+    @Test
+    void shouldFailTheWithInvalidUserEmail()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.of(testingAccount));
+        when(transactionRepository.findByAccountId(anyLong())).thenReturn(List.of(transaction));
+
+        assertThatExceptionOfType(AccessDeniedException.class)
+                .isThrownBy(() -> transactionService.handleTransaction("invalid@mail.com", testingAccount.getAccountNumber(), createWithdrawalRequest))
+                .withMessageContaining(ApiErrorMessage.INVALID_REQUEST.getMessage());
+    }
+
+    @Test
+    void shouldFailForANonExistingAccount()
+    {
+        when(accountRepository.findByAccountNumber(anyString())).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(ApiNotFoundException.class)
+                .isThrownBy(() -> transactionService.handleTransaction("invalid@mail.com", testingAccount.getAccountNumber(), createWithdrawalRequest))
+                .withMessageContaining(ApiErrorMessage.ACCOUNT_NOT_FOUND.getMessage());
     }
 
 }

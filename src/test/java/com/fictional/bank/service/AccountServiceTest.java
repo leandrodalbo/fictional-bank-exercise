@@ -1,19 +1,12 @@
 package com.fictional.bank.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
-
 import com.fictional.bank.exception.ApiErrorMessage;
 import com.fictional.bank.exception.ApiNotFoundException;
-import com.fictional.bank.entity.Account;
-import com.fictional.bank.entity.User;
-import com.fictional.bank.entity.UserAddress;
 import com.fictional.bank.repository.AccountRepository;
 import com.fictional.bank.repository.UserRepository;
 import com.fictional.bank.request.CreateBankAccountRequest;
-import com.fictional.bank.request.UpdateBankAccountRequest;
 import com.fictional.bank.response.BankAccountResponse;
 import com.fictional.bank.response.ListBankAccountsResponse;
 import com.fictional.bank.utils.Utils;
@@ -24,6 +17,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import static com.fictional.bank.TestingUtils.testingAccount;
+import static com.fictional.bank.TestingUtils.testingUser;
+import static com.fictional.bank.TestingUtils.updateBankAccountRequest;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,32 +32,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class AccountServiceTest
 {
-    private final User testingUser = new User(
-            1001L,
-            "user-name",
-            new UserAddress("l1", "l2", "l3", "town", "", ""),
-            "testinguser@mail.com",
-            "",
-            LocalDateTime.now(),
-            LocalDateTime.now()
-    );
-
-    private final Account testingAccount = Account.builder()
-            .id(1L)
-            .user(testingUser)
-            .accountNumber("12345678")
-            .sortCode("12-34-56")
-            .accountName("Personal Account")
-            .accountType("personal")
-            .balance(BigDecimal.ZERO)
-            .currency(Utils.GBP_CURRENCY)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .build();
-
-    private final UpdateBankAccountRequest updateBankAccountRequest = new UpdateBankAccountRequest(
-            "UPDATED-NAME", "OTHER-TYPE"
-    );
 
 
     @Mock

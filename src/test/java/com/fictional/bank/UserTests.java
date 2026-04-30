@@ -24,6 +24,7 @@ import com.fictional.bank.request.CreateUserRequest;
 import com.fictional.bank.request.LoginRequest;
 import com.fictional.bank.request.UpdateUserRequest;
 
+import static com.fictional.bank.TestingUtils.updateUserRequest;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -43,7 +44,6 @@ class UserTests
     @ServiceConnection
     static PostgreSQLContainer<?> container =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:alpine"));
-    private final UpdateUserRequest updateUserRequest = new UpdateUserRequest("updating-name", new UserAddress("l1", "l2", "l3", "town", "", ""), "+4498216847", "updated@mail.com");
 
     @Autowired
     protected MockMvc mockMvc;
